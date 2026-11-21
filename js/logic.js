@@ -134,7 +134,7 @@ function updateItems(dt) {
 function collectItem(it) {
   if (it.type === 'cholent') {
     if (P.tier >= 3) addScore(1000, P.x, P.y - 130);
-    else { setTier(P.tier + 1); shake = .22; addPop(P.x, P.y - 140, ['', 'עכשיו אתה רב! אפשר לזרוק חלות', 'רב גדול ושחור יותר!', 'זקן ומשקפי שמש!'][P.tier], '#ffe14d', 2); burst(P.x, P.y - 70, 26, ['#ffd23f', '#fff', '#111'], 440); }
+    else { setTier(P.tier + 1); shake = .22; addPop(P.x, P.y - 140, ['', 'עכשיו אתה רב! אפשר לזרוק חלות', 'הרב הגדול! עוד חלות', 'זקן ומשקפי שמש!'][P.tier], '#ffe14d', 2); burst(P.x, P.y - 70, 26, ['#ffd23f', '#fff', '#111'], 440); }
     Snd.power();
   }
   else if (it.type === 'coffee') { P.boost = 9; Snd.power(); addPop(P.x, P.y - 120, 'קפה! יותר מהיר', '#9ee8ff', 1.4); }

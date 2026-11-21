@@ -1,5 +1,5 @@
 /* ---------- update: player ---------- */
-const RUN = 300, RUNF = 420, ACC = 2600, FRIC = 2400, GRAV = 2600, JV = -1010;
+const RUN = 330, RUNF = 470, ACC = 2800, FRIC = 2400, GRAV = 2500, JV = -1010;
 function hurt() {
   if (P.inv > 0 || P.dead || P.won) return;
   if (P.sup) { P.sup = false; P.inv = 1.8; P.vy = -520; Snd.hurt(); addPop(P.x, P.y - 110, 'אוף!', '#ff7a7a', .8); return; }
@@ -18,7 +18,7 @@ function updatePlayer(dt) {
   const dirIn = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
   if (dirIn) {
     p.dir = dirIn;
-    const acc = (p.onGround ? ACC : 1700) * (dirIn !== Math.sign(p.vx) && p.vx ? 1.6 : 1);
+    const acc = (p.onGround ? ACC : 2300) * (dirIn !== Math.sign(p.vx) && p.vx ? 1.6 : 1);
     p.vx += dirIn * acc * dt;
     if (Math.abs(p.vx) > maxV) p.vx = Math.sign(p.vx) * Math.max(maxV, Math.abs(p.vx) - 3000 * dt);
     p.idle = 0;
@@ -28,7 +28,7 @@ function updatePlayer(dt) {
   }
   if (jumpPressed) p.buf = .13;
   p.buf -= dt; p.coyote -= dt;
-  if (p.onGround) p.coyote = .1;
+  if (p.onGround) p.coyote = .13;
   if (p.buf > 0 && p.coyote > 0) {
     p.vy = JV * (p.boost > 0 ? 1.1 : 1); p.onGround = false; p.coyote = 0; p.buf = 0; Snd.jump(); p.idle = 0;
     burst(p.x, p.y, 5, ['#fff', '#e8d9b0'], 120, 400);
@@ -44,6 +44,10 @@ function updatePlayer(dt) {
   p.y += p.vy * dt;
   const res = collideY(p, p.vy, prevB);
   if (res && res.bump) bumpTile(res.bump.c, res.bump.r, res.bump.ch);
+  if (p.onGround && !p.wasGround && p.lastVy > 420) { p.sq = .16; burst(p.x, p.y, 8, ['#f3e6c6', '#d8c196', '#fff'], 160, 300); }
+  p.wasGround = p.onGround; p.lastVy = p.vy;
+  if (p.sq > 0) p.sq -= dt;
+  if (p.onGround && Math.abs(p.vx) > 170 && Math.random() < dt * 16) burst(p.x - p.dir * 14, p.y - 2, 1, ['#f3e6c6', '#d8c196'], 70, 260);
   p.anim += Math.abs(p.vx) * dt;
   if (p.inv > 0) p.inv -= dt;
   if (p.boost > 0) p.boost -= dt;

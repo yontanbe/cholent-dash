@@ -18,7 +18,7 @@ const HEB = /[֐-׿]/;
 const FONT = "'Rubik','Arial Hebrew',Arial,sans-serif";
 
 /* ---------- assets ---------- */
-const MAN = { hero: 8, enemies: 8, items: 8, tiles: 8 };
+const MAN = { hero: 12, enemies: 8, items: 8, tiles: 8 };
 const IM = {};
 function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
 async function loadAll(onp) {
@@ -48,7 +48,7 @@ function sprBox(name, x, y, w, h, alpha = 1) {
 
 /* ---------- sprite index map (from the generated sheets) ---------- */
 const S = {
-  run: ['hero_0', 'hero_1', 'hero_2', 'hero_3'], jump: 'hero_4', fall: 'hero_5', idle: 'hero_6', hurt: 'hero_7',
+  run: ['hero_0', 'hero_1', 'hero_2', 'hero_3', 'hero_4', 'hero_5', 'hero_6', 'hero_7'], jump: 'hero_8', fall: 'hero_9', idle: 'hero_10', hurt: 'hero_11',
   coin: 'items_0', challah: 'items_1', hat: 'items_2', coffee: 'items_3', cholent: 'items_4', shofar: 'items_5', candles: 'items_6', juice: 'items_7',
   ground: 'tiles_1', brick: 'tiles_0', crate: 'tiles_2', mystery: 'tiles_3', dumpster: 'tiles_4', table: 'tiles_6', sign: 'tiles_7',
 };
@@ -92,29 +92,42 @@ const Snd = {
   tick() { this.tone(900, 900, .05, 'square', .08); },
 };
 
-/* ---------- audio: music (mp3 if present, else generated klezmer-ish chiptune) ---------- */
-const FREY = [0, 1, 4, 5, 7, 8, 10];
-const d2s = d => FREY[((d % 7) + 7) % 7] + 12 * Math.floor(d / 7);
+/* ---------- audio: music (mp3 if present, else generated Hava Nagila arrangement) ---------- */
+/* Melody offsets in semitones from A4, [note, length in eighths], null is a rest. Hava Nagila is a traditional folk tune. */
+const HN_BARS = [
+  [[-5, 2], [-5, 2], [null, 1], [-1, 1], [-4, 1], [-5, 1]],
+  [[-1, 2], [-1, 2], [null, 1], [2, 1], [0, 1], [-1, 1]],
+  [[0, 2], [0, 2], [null, 1], [3, 1], [2, 1], [0, 1]],
+  [[-1, 1], [-1, 1], [0, 1], [-1, 1], [-4, 2], [-5, 2]],
+];
+const HN_BARS_B = [
+  [[7, 1], [5, 1], [3, 1], [5, 1], [7, 2], [null, 2]],
+  [[7, 1], [5, 1], [3, 1], [2, 1], [3, 2], [0, 2]],
+  [[3, 1], [2, 1], [0, 1], [-1, 1], [0, 1], [-1, 1], [0, 2]],
+  [[2, 1], [-1, 1], [0, 1], [-1, 1], [-4, 2], [-5, 2]],
+];
+function expandBars(bars, add) {
+  const o = [];
+  for (const bar of bars) { const st = []; for (const [n, l] of bar) { st.push(n === null ? null : n + add); for (let i = 1; i < l; i++) st.push('~'); } while (st.length < 8) st.push(null); o.push(st); }
+  return o;
+}
+const CHORD_E = { bass: -17, fifth: -10, tri: [-5, -1, 2] }, CHORD_A = { bass: -12, fifth: -5, tri: [0, 3, 7] };
+const BAR_CH = [CHORD_E, CHORD_E, CHORD_A, CHORD_E, CHORD_E, CHORD_E, CHORD_A, CHORD_E];
 const TRK = {
-  title: { bpm: 112, root: -5, seed: 11, file: 'music/title.mp3' },
-  l1: { bpm: 148, root: 0, seed: 21, file: 'music/level1.mp3' },
-  l2: { bpm: 138, root: -2, seed: 33, file: 'music/level2.mp3' },
-  l3: { bpm: 170, root: 2, seed: 47, file: 'music/level3.mp3' },
-  l4: { bpm: 164, root: -3, seed: 59, file: 'music/boss.mp3' },
-  win: { bpm: 140, root: 0, seed: 71, file: 'music/win.mp3' },
+  title: { bpm: 104, root: 0, lead: 'triangle', file: 'music/title.mp3' },
+  l1: { bpm: 152, root: 0, lead: 'square', file: 'music/level1.mp3' },
+  l2: { bpm: 144, root: -2, lead: 'square', file: 'music/level2.mp3' },
+  l3: { bpm: 168, root: 2, lead: 'square', file: 'music/level3.mp3' },
+  l4: { bpm: 176, root: -4, lead: 'sawtooth', file: 'music/boss.mp3' },
+  win: { bpm: 132, root: 3, lead: 'triangle', file: 'music/win.mp3' },
 };
 const Chip = {
   timer: null, step: 0, nextT: 0, tr: null, mel: [], gain: null,
   start(k) {
     if (!Snd.ctx) return; this.stop();
-    const tr = this.tr = TRK[k], r = mulberry(tr.seed);
-    this.mel = []; let d = 4;
-    for (let s = 0; s < 32; s++) {
-      if (s % 8 === 7 && r() < .5) { this.mel.push(-99); continue; }
-      d = clamp(d + [-2, -1, -1, 0, 1, 1, 2][Math.floor(r() * 7)], 0, 11);
-      if (s % 16 === 15) d = 0; if (s % 16 === 0 && s) d = 4;
-      this.mel.push(r() < .84 ? d : -99);
-    }
+    this.tr = TRK[k];
+    const A = expandBars(HN_BARS, 0), B = expandBars(HN_BARS_B, 0);
+    this.mel = [].concat(...A, ...B);
     this.gain = Snd.ctx.createGain(); this.gain.gain.value = Snd.muted ? 0 : 1; this.gain.connect(Snd.master);
     this.step = 0; this.nextT = Snd.ctx.currentTime + .08;
     this.timer = setInterval(() => this.tick(), 60);
@@ -123,24 +136,32 @@ const Chip = {
   tick() {
     const c = Snd.ctx, spb = 60 / this.tr.bpm / 2;
     if (!c || !this.gain) return;
-    while (this.nextT < c.currentTime + .3) { this.play(this.step, this.nextT, spb); this.step = (this.step + 1) % 32; this.nextT += spb; }
+    while (this.nextT < c.currentTime + .3) { this.play(this.step, this.nextT, spb); this.step = (this.step + 1) % 64; this.nextT += spb; }
   },
-  osc(f, t, dur, type, vol) {
+  osc(f, t, dur, type, vol, det) {
     const c = Snd.ctx, o = c.createOscillator(), g = c.createGain();
-    o.type = type; o.frequency.value = f; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.type = type; o.frequency.value = f; if (det) o.detune.value = det;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + .012); g.gain.exponentialRampToValueAtTime(.001, t + dur);
     o.connect(g); g.connect(this.gain); o.start(t); o.stop(t + dur + .02);
   },
+  hz(n) { return 440 * Math.pow(2, (this.tr.root + n) / 12); },
   play(s, t, spb) {
-    const b = this.tr.root, bar = Math.floor(s / 8) % 4, chord = [0, 0, 3, 4][bar];
-    const m = this.mel[s];
-    if (m !== -99) this.osc(440 * Math.pow(2, (b + 12 + d2s(m)) / 12), t, spb * .9, 'square', .055);
-    if (s % 2 === 0) this.osc(440 * Math.pow(2, (b - 12 + d2s(chord + (s % 4 === 2 ? 4 : 0))) / 12), t, spb * 1.6, 'triangle', .2);
-    if (s % 4 === 1 || s % 4 === 3) {
-      const c = Snd.ctx, n = Math.floor(c.sampleRate * .04), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
-      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-      const src = c.createBufferSource(), g = c.createGain(); g.gain.value = .05; src.buffer = buf; src.connect(g); g.connect(this.gain); src.start(t);
+    const bar = Math.floor(s / 8), st = s % 8, ch = BAR_CH[bar], m = this.mel[s];
+    if (m !== null && m !== '~') {
+      let len = 1; for (let i = s + 1; i < 64 && this.mel[i] === '~'; i++) len++;
+      const lead = this.tr.lead, dur = spb * len * .92;
+      this.osc(this.hz(m), t, dur, lead, lead === 'sawtooth' ? .05 : .075);
+      this.osc(this.hz(m), t, dur, 'square', .022, 8);
     }
-    if (s % 4 === 0) this.osc(110, t, .12, 'sine', .3);
+    if (st === 0) this.osc(this.hz(ch.bass), t, spb * 1.8, 'triangle', .28);
+    if (st === 4) this.osc(this.hz(ch.fifth), t, spb * 1.8, 'triangle', .24);
+    if (st === 2 || st === 6) for (const n of ch.tri) this.osc(this.hz(n), t, spb * .8, 'square', .03);
+    if (st === 0 || st === 4) this.osc(95, t, .12, 'sine', .3);
+    if (st === 2 || st === 6) {
+      const c = Snd.ctx, n = Math.floor(c.sampleRate * .05), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const src = c.createBufferSource(), g = c.createGain(); g.gain.value = .07; src.buffer = buf; src.connect(g); g.connect(this.gain); src.start(t);
+    }
   },
 };
 const Music = {
@@ -221,7 +242,7 @@ const THEME = {
 const CH = {
   flat: ['..............', '..............', '..............', '..............', '....ooo.......', '.........E....', '##############', '##############'],
   blocks: ['..............', '...ooooo......', '..............', '...?B?B?......', '..............', '.........E....', '##############', '##############'],
-  pit: ['..............', '..............', '..............', '..............', '....ooooo.....', '..............', '#####....#####', '#####....#####'],
+  pit: ['..............', '..............', '..............', '..............', '....ooooo.....', '..............', '#####...######', '#####...######'],
   stairs: ['..............', '..............', '..............', '..........E...', '..........BB..', '......BB..BB..', '##############', '##############'],
   dump: ['..............', '..............', '..............', '...oo.....oo..', '..DD......DD..', '..DD...E..DD..', '##############', '##############'],
   awn: ['..............', '..............', '..............', '...ooo..ooo...', '...AAA..AAA...', '..............', '##..........##', '##....W.....##'],

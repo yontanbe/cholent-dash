@@ -2,8 +2,12 @@
 const RUN = 330, RUNF = 470, ACC = 2800, FRIC = 2400, GRAV = 2500, JV = -1010;
 function hurt() {
   if (P.inv > 0 || P.dead || P.won) return;
-  if (P.sup) { P.sup = false; P.inv = 1.8; P.vy = -520; Snd.hurt(); addPop(P.x, P.y - 110, 'אוף!', '#ff7a7a', .8); return; }
+  if (P.tier > 0) { setTier(P.tier - 1); P.inv = 1.8; P.vy = -520; Snd.hurt(); addPop(P.x, P.y - 110, 'אוף!', '#ff7a7a', .8); burst(P.x, P.y - 60, 12, ['#fff', '#ff7a7a', '#ffd23f'], 320); return; }
   die();
+}
+function setTier(n, instant) {
+  P.tier = n; P.w = TIERS[n].w; P.h = TIERS[n].h; P.sup = n >= 1;
+  if (instant) P.rs = TIERS[n].s; else P.pop = .5;
 }
 function die(msg) {
   if (P.dead) return;
@@ -33,7 +37,8 @@ function updatePlayer(dt) {
     p.vy = JV * (p.boost > 0 ? 1.1 : 1); p.onGround = false; p.coyote = 0; p.buf = 0; Snd.jump(); p.idle = 0;
     burst(p.x, p.y, 5, ['#fff', '#e8d9b0'], 120, 400);
   }
-  if (!keys.jump && p.vy < -300) p.vy *= (1 - 9 * dt);
+  if (p.vy >= 0 || p.onGround) p.spr = false;
+  if (!keys.jump && p.vy < -300 && !p.spr) p.vy *= (1 - 9 * dt);
   p.vy = Math.min(p.vy + GRAV * dt, 1500);
 
   p.x += p.vx * dt;
@@ -44,6 +49,10 @@ function updatePlayer(dt) {
   p.y += p.vy * dt;
   const res = collideY(p, p.vy, prevB);
   if (res && res.bump) bumpTile(res.bump.c, res.bump.r, res.bump.ch);
+  if (p.onGround) {
+    const sc = Math.floor(p.x / T), sr = Math.floor((p.y + 2) / T);
+    if (chAt(sc, sr) === 'S') { p.spr = true; p.vy = keys.jump ? -1550 : -1250; p.onGround = false; p.coyote = 0; L.bump[sc + ',' + sr] = .18; Snd.tone(260, 900, .28, 'triangle', .22); burst(p.x, p.y, 8, ['#ff6a6a', '#fff', '#ffd23f'], 220, 300); }
+  }
   if (p.onGround && !p.wasGround && p.lastVy > 420) { p.sq = .16; burst(p.x, p.y, 8, ['#f3e6c6', '#d8c196', '#fff'], 160, 300); }
   p.wasGround = p.onGround; p.lastVy = p.vy;
   if (p.sq > 0) p.sq -= dt;
@@ -53,7 +62,7 @@ function updatePlayer(dt) {
   if (p.boost > 0) p.boost -= dt;
   if (!dirIn && p.onGround) { p.idle += dt; if (p.idle > 4 && !p.say) { p.say = pick(IDLEL); p.sayT = 2.2; } } else p.idle = 0;
   if (p.sayT > 0) { p.sayT -= dt; if (p.sayT <= 0) { p.say = ''; p.idle = 0; } }
-  if (throwPressed && p.sup && shots.length < 2) {
+  if (throwPressed && p.tier >= 1 && shots.length < (p.tier >= 2 ? 3 : 2)) {
     shots.push({ x: p.x + p.dir * 30, y: p.y - 60, vx: p.dir * 560 + p.vx * .3, vy: -240, rot: 0, life: 3 }); Snd.throw();
   }
   // fall into pit
@@ -71,7 +80,7 @@ function bumpTile(c, r, ch) {
     L.g[r][c] = '.'; burst(c * T + T / 2, r * T + T / 2, 14, ['#c98a58', '#8a5a34', '#e6b17c'], 360); addScore(50, c * T + T / 2, r * T); Snd.stomp();
   }
   // knock enemies standing above
-  for (const e of L.enemies) if (!e.isDead && Math.abs(e.x - (c * T + T / 2)) < T * .7 && Math.abs(e.y - r * T) < 8) { killEnemy(e, true); }
+  for (const e of L.enemies) if (!e.isDead && !e.k.hazard && Math.abs(e.x - (c * T + T / 2)) < T * .7 && Math.abs(e.y - r * T) < 8) { killEnemy(e, true); }
 }
 
 /* ---------- update: enemies, items, etc ---------- */
@@ -123,7 +132,11 @@ function updateItems(dt) {
   L.items = L.items.filter(i => !i.gone);
 }
 function collectItem(it) {
-  if (it.type === 'cholent') { if (P.sup) addScore(1000, P.x, P.y - 110); else { P.sup = true; addPop(P.x, P.y - 120, 'אפשר לזרוק חלות!', '#ffe14d', 1.6); } Snd.power(); }
+  if (it.type === 'cholent') {
+    if (P.tier >= 3) addScore(1000, P.x, P.y - 130);
+    else { setTier(P.tier + 1); shake = .22; addPop(P.x, P.y - 140, ['', 'עכשיו אתה רב! אפשר לזרוק חלות', 'רב גדול ושחור יותר!', 'זקן ומשקפי שמש!'][P.tier], '#ffe14d', 2); burst(P.x, P.y - 70, 26, ['#ffd23f', '#fff', '#111'], 440); }
+    Snd.power();
+  }
   else if (it.type === 'coffee') { P.boost = 9; Snd.power(); addPop(P.x, P.y - 120, 'קפה! יותר מהיר', '#9ee8ff', 1.4); }
   else if (it.type === 'hat') { lives++; Snd.oneup(); addPop(P.x, P.y - 120, 'כובע, חיים נוספים!', '#7dff9b', 1.5); }
   burst(P.x, P.y - 50, 14, ['#ffd23f', '#fff', '#7dff9b'], 360);
@@ -134,7 +147,8 @@ function updateInteractions(dt) {
   for (const e of L.enemies) {
     if (e.isDead || !overlap(P, e)) continue;
     const stomp = P.vy > 80 && P.prevB <= e.y - e.h + 26;
-    if (stomp) { killEnemy(e, false); P.vy = keys.jump ? -820 : -560; P.onGround = false; }
+    if (stomp && !e.k.hazard) { killEnemy(e, false); P.vy = keys.jump ? -820 : -560; P.onGround = false; }
+    else if (P.tier >= 3 && !e.k.hazard && Math.abs(P.vx) > 300) { killEnemy(e, true); }
     else hurt();
   }
   for (const c of L.coins) if (!c.got && Math.abs(c.x - P.x) < 36 && c.y > P.y - P.h - 18 && c.y < P.y + 18) { c.got = true; addCoin(); addScore(50); Snd.coin(); burst(c.x, c.y, 6, ['#ffd23f', '#fff'], 200, 300); }
@@ -145,7 +159,7 @@ function updateInteractions(dt) {
     const c = Math.floor(s.x / T), r = Math.floor((s.y + 14) / T);
     if (s.vy > 0 && solidAt(c, r)) { s.y = r * T - 14; s.vy = -420; }
     if (solidAt(Math.floor((s.x + Math.sign(s.vx) * 14) / T), Math.floor(s.y / T))) s.life = 0;
-    for (const e of L.enemies) if (!e.isDead && Math.abs(e.x - s.x) < e.w / 2 + 16 && s.y > e.y - e.h - 16 && s.y < e.y + 16) { killEnemy(e, true); s.life = 0; }
+    for (const e of L.enemies) if (!e.isDead && Math.abs(e.x - s.x) < e.w / 2 + 16 && s.y > e.y - e.h - 16 && s.y < e.y + 16) { if (!e.k.hazard) killEnemy(e, true); s.life = 0; }
     if (boss && !boss.dead && boss.cd <= 0 && Math.abs(boss.x - s.x) < boss.w / 2 + 16 && s.y > boss.y - boss.h - 16 && s.y < boss.y) { damageBoss(); s.life = 0; }
   }
   shots = shots.filter(s => s.life > 0 && s.y < ROWS * T + 100);
@@ -155,7 +169,7 @@ function updateInteractions(dt) {
   }
 }
 function levelDone() {
-  P.won = true; state = 'complete'; stateT = 0; Snd.win();
+  P.won = true; carryTier = P.tier; state = 'complete'; stateT = 0; Snd.win();
   const tb = Math.floor(L.timeLeft) * 10; score += tb;
   stats.tb = tb; stats.time = Math.floor(L.timeLeft); stats.coins = coins - stats.coins0;
   const bst = Math.max(best, score); if (bst > best) { best = bst; try { localStorage.setItem('cholent_best', String(best)); } catch (e) { } }

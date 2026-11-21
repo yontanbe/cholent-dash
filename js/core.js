@@ -18,14 +18,14 @@ const HEB = /[֐-׿]/;
 const FONT = "'Rubik','Arial Hebrew',Arial,sans-serif";
 
 /* ---------- assets ---------- */
-const MAN = { hero: 12, enemies: 8, items: 8, tiles: 8 };
+const MAN = { hero: 12, enemies: 16, items: 8, tiles: 8 };
 const IM = {};
 function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
 async function loadAll(onp) {
   const list = [];
   for (const k in MAN) for (let i = 0; i < MAN[k]; i++) list.push([`${k}_${i}`, `assets/${k}_${i}.png`]);
   list.push(['boss', 'assets/boss.png']);
-  ['bg1', 'bg2', 'bg3', 'bg4', 'title'].forEach(n => list.push([n, `assets/${n}.jpg`]));
+  ['bg1', 'bg2', 'bg3', 'bg4', 'bg5', 'bg6', 'bg7', 'bg8', 'bg9', 'title'].forEach(n => list.push([n, `assets/${n}.jpg`]));
   let d = 0;
   await Promise.all(list.map(async ([n, s]) => { IM[n] = await loadImg(s); d++; onp(d / list.length); }));
 }
@@ -119,6 +119,10 @@ const TRK = {
   l2: { bpm: 144, root: -2, lead: 'square', file: 'music/level2.mp3' },
   l3: { bpm: 168, root: 2, lead: 'square', file: 'music/level3.mp3' },
   l4: { bpm: 176, root: -4, lead: 'sawtooth', file: 'music/boss.mp3' },
+  l5: { bpm: 160, root: 5, lead: 'square', file: 'music/level5.mp3' },
+  l6: { bpm: 138, root: 0, lead: 'triangle', file: 'music/level6.mp3' },
+  l7: { bpm: 150, root: -3, lead: 'square', file: 'music/level7.mp3' },
+  l8: { bpm: 156, root: 7, lead: 'sine', file: 'music/level8.mp3' },
   win: { bpm: 132, root: 3, lead: 'triangle', file: 'music/win.mp3' },
 };
 const Chip = {
@@ -230,6 +234,21 @@ const LV = [
   { name: 'האולם', bg: 'bg3', music: 'l3', time: 280, theme: 'w', seed: 29,
     seq: ['flat', 'blocks', 'awn', 'gaunt', 'pit', 'hill', 'myst', 'gaunt', 'dump', 'awn2', 'rest', 'pit', 'stairs', 'gaunt', 'crates', 'awn', 'pit', 'myst', 'gaunt', 'flat'],
     story: 'החתונה של השנה! הסיר פרץ לריקודים ובינתיים הבופה פתוח. קוגלים מעופפים, דליי סמרטוט בתפקיד המלצרים והרבה חתולים בין הרגליים. אל תעצרו לרקוד, השקיעה מתקרבת.' },
+  { name: 'החוף', bg: 'bg5', music: 'l5', time: 270, theme: 'h', seed: 53,
+    seq: ['flat', 'blocks', 'dune', 'spring', 'pit', 'awn', 'gaunt', 'crates', 'myst', 'pit', 'rest', 'awn2', 'hill', 'gaunt', 'spring', 'pit', 'stairs', 'gaunt', 'myst', 'flat'],
+    story: 'הסיר ברח לחוף הים. סרטנים עם גישה, שחפים עם תוכניות וכדורי חוף שמתגלגלים בדיוק עליך. יוסי, תוריד נעליים רק בשבת. רוץ על החול, קפוץ על הקפיצים ותמשיך.' },
+  { name: 'מירון', bg: 'bg6', music: 'l6', time: 280, theme: 'g', seed: 67,
+    seq: ['flat', 'bonfire', 'blocks', 'pit', 'fires', 'awn', 'gaunt', 'bonfire', 'hill', 'myst', 'rest', 'pit', 'spring', 'fires', 'awn2', 'gaunt', 'bonfire', 'pit', 'crates', 'gaunt'],
+    story: 'ל"ג בעומר, הלילה של המדורות. הסיר החליט שהוא חלק מהאירוע והתיישב על מדורה. תיזהר מהלהבות, אי אפשר לקפוץ עליהן. תקפוץ מעליהן, ותמשיך לרוץ.' },
+  { name: 'בית המדרש', bg: 'bg7', music: 'l7', time: 290, theme: 'z', seed: 79,
+    seq: ['flat', 'shelf', 'blocks', 'pit', 'crates', 'awn', 'gaunt', 'myst', 'shelf', 'hill', 'rest', 'pit', 'awn2', 'stairs', 'gaunt', 'spring', 'shelf', 'pit', 'myst', 'gaunt'],
+    story: 'הסיר נכנס לבית המדרש כדי להתחבא בין הספרים. הספרים התעוררו והם לא אוהבים שמפריעים להם באמצע הלימוד. שששש, ותקפצו על הדפים הכועסים.' },
+  { name: 'נמל התעופה', bg: 'bg8', music: 'l8', time: 300, theme: 'a', seed: 91,
+    seq: ['flat', 'gate', 'blocks', 'pit', 'crates', 'gaunt', 'awn2', 'myst', 'dump', 'gate', 'rest', 'pit', 'spring', 'gaunt', 'hill', 'awn', 'pit', 'stairs', 'myst', 'gaunt'],
+    story: 'הסיר קנה כרטיס לשער 42 בלי לשאול אף אחד. מזוודות עצבניות, רחפנים בביקורת ביטחון וקרוניות כבודה שנוסעות ישר עליך. תעבור בדיקה ותתפוס אותו לפני ההמראה.' },
+  { name: 'ענני שבת', bg: 'bg9', music: 'l8', time: 320, theme: 'k', seed: 103,
+    seq: ['flat', 'sky1', 'sky2', 'sky3', 'sky1', 'sky2', 'sky3', 'sky1', 'sky2', 'sky3', 'rest', 'sky1', 'sky3', 'sky2', 'sky1', 'sky3', 'sky2', 'sky1', 'sky3', 'flat'],
+    story: 'הסיר עלה לשמיים ויוסי אחריו, מענן לענן. למטה אין כלום, למעלה רק ענני סערה עם מזג. אל תסתכל למטה, תסתכל על הנרות. השבת ממש קרובה.' },
   { name: 'הגג', bg: 'bg4', music: 'l4', time: 300, boss: true, theme: 'b', seed: 41,
     story: 'השמש נוגעת באופק. הסיר גדל לגודל של שני טנדרים, חם, עצבני ומתבשל. קפצו עליו חמש פעמים כדי להרגיע אותו ולהחזיר אותו הביתה. אפשר גם לזרוק עליו חלות.' },
 ];
@@ -238,6 +257,11 @@ const THEME = {
   m: { dirt: '#9a6a44', top: '#e9a94c', hi: '#ffd37a', line: '#7b4a2a' },
   w: { dirt: '#7a3b66', top: '#efc44f', hi: '#fff0a0', line: '#3d1a38' },
   b: { dirt: '#8a4a3c', top: '#e0662c', hi: '#ffb072', line: '#3e1c18' },
+  h: { dirt: '#e6c27a', top: '#f4dc9a', hi: '#fff1c4', line: '#b08a48', d0: '#c9a060', d1: '#9a7440', spr: false, a1: '#ff6a6a', a2: '#ffffff' },
+  g: { dirt: '#3a3550', top: '#6a8a5a', hi: '#9ac07a', line: '#17142a', d0: '#2b2640', d1: '#14102a', spr: false, a1: '#7a4a2a', a2: '#c98a58' },
+  z: { dirt: '#6a4528', top: '#b8864a', hi: '#e0b070', line: '#2e1a0c', d0: '#4a2e18', d1: '#2a180c', spr: false, a1: '#7a2a2a', a2: '#e6c070' },
+  a: { dirt: '#6a7488', top: '#aab4c8', hi: '#dfe6f4', line: '#2a3040', d0: '#505a6e', d1: '#2c3342', spr: false, a1: '#2f7de1', a2: '#ffffff' },
+  k: { dirt: '#cfd9f5', top: '#ffffff', hi: '#ffffff', line: '#98aee0', d0: '#e4ecff', d1: '#b4c4ee', spr: false, cloud: true, a1: '#ffffff', a2: '#cfe0ff' },
 };
 const CH = {
   flat: ['..............', '..............', '..............', '..............', '....ooo.......', '.........E....', '##############', '##############'],
@@ -252,6 +276,15 @@ const CH = {
   awn2: ['..............', '.......ocoo...', '......AAAA....', '..............', '..AAAA........', '..........E...', '##############', '##############'],
   rest: ['..............', '..............', '..............', '..............', '.....oooo.....', '......c.......', '##############', '##############'],
   hill: ['..............', '..............', '......ooo.....', '.......E......', '......####....', '....########..', '##############', '##############'],
+  dune: ['..............', '..............', '....ooo..ooo..', '.....E........', '....####..E...', '..#########...', '##############', '##############'],
+  spring: ['.......ooo....', '.......ccc....', '.......AAA....', '..............', '..............', '.....E........', '####S#########', '##############'],
+  bonfire: ['..............', '..............', '..............', '...oo.....oo..', '..............', '....H.....H...', '##############', '##############'],
+  fires: ['..............', '..............', '.....ooooo....', '..............', '....AAAAAA....', '...H......E.H.', '##############', '##############'],
+  shelf: ['..............', '..............', '..............', '....ooo.......', '...AAAAAA.....', '.CC.......E...', '##############', '##############'],
+  gate: ['..............', '..............', '..oo......oo..', '..BBB....BBB..', '..............', '......E.......', '##############', '##############'],
+  sky1: ['..............', '..............', '.....ooo...o..', '.....AAAA.....', '..E...........', '.AAA.....AAA..', '..............', '..............'],
+  sky2: ['..............', '......ooo.....', '..........ooo.', '..E.........E.', '.AAA..AAA.AAA.', '..............', '..............', '..............'],
+  sky3: ['..............', '..............', '........ooo...', '....AAA..AAA..', '..............', '.AA..........A', '..............', '..............'],
 };
 const EK = {
   cat: { spr: 'enemies_0', h: 64, w: 50, hh: 44, beh: 'walk', sp: 85 },
@@ -262,23 +295,37 @@ const EK = {
   falafel: { spr: 'enemies_5', h: 72, w: 50, hh: 54, beh: 'hop', sp: 90 },
   herring: { spr: 'enemies_6', h: 74, w: 48, hh: 60, beh: 'leap', sp: 0 },
   mop: { spr: 'enemies_7', h: 76, w: 52, hh: 58, beh: 'walk', sp: 60 },
+  crab: { spr: 'enemies_8', h: 56, w: 58, hh: 40, beh: 'walk', sp: 100 },
+  gull: { spr: 'enemies_9', h: 70, w: 52, hh: 46, beh: 'fly', sp: 110 },
+  ball: { spr: 'enemies_10', h: 58, w: 52, hh: 48, beh: 'roll', sp: 190 },
+  flame: { spr: 'enemies_11', h: 78, w: 40, hh: 58, beh: 'static', hazard: true, sp: 0 },
+  spark: { spr: 'enemies_11', h: 56, w: 36, hh: 44, beh: 'hop', sp: 110 },
+  book: { spr: 'enemies_12', h: 62, w: 66, hh: 44, beh: 'fly', sp: 100 },
+  case: { spr: 'enemies_13', h: 78, w: 46, hh: 62, beh: 'walk', sp: 90 },
+  drone: { spr: 'enemies_14', h: 56, w: 70, hh: 40, beh: 'fly', sp: 125 },
+  storm: { spr: 'enemies_15', h: 74, w: 60, hh: 54, beh: 'fly', sp: 95 },
 };
 const TH = {
   n: { E: ['cat', 'cat', 'cart'], Y: ['pigeon'], W: ['herring'] },
   m: { E: ['pickle', 'pickle', 'falafel'], Y: ['pigeon'], W: ['herring'] },
   w: { E: ['mop', 'cat', 'falafel'], Y: ['kugel'], W: ['herring'] },
+  h: { E: ['crab', 'crab', 'ball'], Y: ['gull'], W: ['herring'], H: ['flame'] },
+  g: { E: ['cat', 'spark', 'spark'], Y: ['pigeon'], W: ['herring'], H: ['flame'] },
+  z: { E: ['mop', 'cat', 'pickle'], Y: ['book'], W: ['herring'], H: ['flame'] },
+  a: { E: ['case', 'case', 'cart'], Y: ['drone'], W: ['herring'], H: ['flame'] },
+  k: { E: ['cat', 'mop', 'cat'], Y: ['storm'], W: ['herring'], H: ['flame'] },
 };
 const POPS = ['בום!', 'סליחה!', 'יאללה!', 'בתיאבון!', 'אחי נו!', 'פאף!'];
 const QUIPS = ['אוי ויי', 'רגע, שכחתי את הכובע', 'זה לא היה בתוכנית', 'הסיר צוחק עליך'];
 const IDLEL = ['איפה הצ\'ולנט שלי?', 'השעה עוברת...', 'אני רעב', 'רגע, הסיר שם?'];
-const SOLID = '#BC?UD';
+const SOLID = '#BC?UDS';
 const isSolidCh = ch => SOLID.indexOf(ch) >= 0;
 
 /* ---------- state ---------- */
 let state = 'loading', loadP = 0, cfgI = 0, L = null, P = null, cam = 0, camT = 0;
 let lives = 3, coins = 0, score = 0, coinsAtStart = 0, scoreAtStart = 0, best = 0;
 let particles = [], popups = [], shake = 0, tAll = 0, stateT = 0, boss = null, shots = [], beans = [];
-let stats = null, paused = false, deadQuip = '';
+let stats = null, paused = false, deadQuip = '', carryTier = 0;
 try { best = +localStorage.getItem('cholent_best') || 0; } catch (e) { }
 
 /* ---------- level builder ---------- */
@@ -319,13 +366,13 @@ function buildLevel(i) {
     else if (ch === 'F') { out.goal = { x, y: yb }; g[rr][c] = '.'; }
     else if (ch === 'o') { out.coins.push({ x, y: rr * T + T / 2, got: false, ph: r() * 6 }); g[rr][c] = '.'; }
     else if (ch === 'c') { out.challahs.push({ x, y: rr * T + T / 2, got: false, ph: r() * 6 }); g[rr][c] = '.'; }
-    else if (ch === 'E' || ch === 'Y' || ch === 'W') {
+    else if (ch === 'E' || ch === 'Y' || ch === 'W' || ch === 'H') {
       const kind = th[ch][Math.floor(r() * th[ch].length)];
       out.enemies.push(mkEnemy(kind, x, yb)); g[rr][c] = '.';
     }
     else if (ch === '?') {
       let t = 'coin'; const q = r();
-      if (firstBox && i === 0) t = 'cholent'; else if (q < .5) t = 'coin'; else if (q < .68) t = 'coffee'; else if (q < .9) t = 'cholent'; else t = 'hat';
+      if (firstBox) t = 'cholent'; else if (q < .4) t = 'coin'; else if (q < .52) t = 'coffee'; else if (q < .92) t = 'cholent'; else t = 'hat';
       firstBox = false; out.boxes[c + ',' + rr] = t;
     }
   }
@@ -368,7 +415,9 @@ function startLevel(i, keepRetry) {
   const prevRetry = keepRetry && L ? L.retry : 0;
   L = buildLevel(i); L.retry = prevRetry;
   const respawnAtCp = keepRetry && L.cp;
-  P = { x: L.start.x, y: L.start.y, vx: 0, vy: 0, w: 40, h: 88, dir: 1, onGround: false, coyote: 0, buf: 0, anim: 0, sup: false, inv: 0, boost: 0, dead: false, deadT: 0, idle: 0, say: '', sayT: 0, won: false, prevB: L.start.y, squash: 0 };
+  P = { x: L.start.x, y: L.start.y, vx: 0, vy: 0, w: 40, h: 88, dir: 1, onGround: false, coyote: 0, buf: 0, anim: 0, sup: false, tier: 0, rs: 1, pop: 0, rg: null, inv: 0, boost: 0, dead: false, deadT: 0, idle: 0, say: '', sayT: 0, won: false, prevB: L.start.y, squash: 0 };
+  if (i === 0 && !keepRetry) carryTier = 0;
+  setTier(carryTier, true);
   cam = 0; particles = []; popups = []; shots = []; beans = []; shake = 0; boss = null;
   if (L.cfg.boss) boss = { x: 34 * T, y: 10 * T, vx: -120, vy: 0, hp: 5, state: 'walk', t: 1.5, stun: 0, cd: 0, dir: -1, w: 190, h: 232, throwT: 2.5, dead: false, defT: 0, onGround: true };
   coinsAtStart = coins; scoreAtStart = score;
@@ -383,7 +432,7 @@ function restartFromDeath() {
   const keepCp = L.cp ? L.cpX : 0, retry = L.retry + 1;
   coins = coinsAtStart; score = scoreAtStart;
   L = buildLevel(cfgI); L.retry = retry; L.timeLeft = LV[cfgI].time; stats.ch = 0;
-  P = { x: L.start.x, y: L.start.y, vx: 0, vy: 0, w: 40, h: 88, dir: 1, onGround: false, coyote: 0, buf: 0, anim: 0, sup: false, inv: 1.5, boost: 0, dead: false, deadT: 0, idle: 0, say: '', sayT: 0, won: false, prevB: L.start.y, squash: 0 };
+  P = { x: L.start.x, y: L.start.y, vx: 0, vy: 0, w: 40, h: 88, dir: 1, onGround: false, coyote: 0, buf: 0, anim: 0, sup: false, tier: 0, rs: 1, pop: 0, rg: null, inv: 1.5, boost: 0, dead: false, deadT: 0, idle: 0, say: '', sayT: 0, won: false, prevB: L.start.y, squash: 0 };
   if (keepCp) { P.x = keepCp + 80; P.y = 10 * T - 400; L.cp = true; L.enemies = L.enemies.filter(e => e.x > keepCp + 500); }
   cam = clamp(P.x - W * .4, 0, L.cols * T - W);
   particles = []; popups = []; shots = []; beans = [];

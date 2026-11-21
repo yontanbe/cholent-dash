@@ -1,2 +1,22 @@
-# cholent-dash
-Yossi and the Lost Cholent: a funny Super Mario style browser platformer
+# יוסי והצ'ולנט האבוד | Yossi and the Lost Cholent
+
+משחק פלטפורמה מצחיק בסגנון סופר מריו. יום שישי, הצ'ולנט קם על רגליים וברח, ויוסי חייב להחזיר אותו לשולחן לפני הדלקת נרות.
+
+A funny Mario-style browser platformer. The cholent pot came alive and ran away before Shabbat. Chase it down.
+
+## איך משחקים
+- חצים או A D: לזוז
+- רווח: לקפוץ (לחיצה ארוכה לקפיצה גבוהה)
+- Shift: לרוץ
+- X: לזרוק חלה (אחרי שאוספים צ'ולנט)
+- P: הפסקה, M: שקט
+- בנייד: כפתורים על המסך
+
+## שלבים
+1. השכונה
+2. השוק
+3. האולם
+4. הגג, קרב מול הסיר הכועס
+
+## טכנולוגיה
+HTML5 Canvas ו-JavaScript נקי, בלי ספריות. גרפיקה נוצרה עם מודלי תמונה, מוזיקה נוצרת בדפדפן. אם מוסיפים קבצי mp3 לתיקיית music (title, level1, level2, level3, boss, win) הם ינוגנו במקום המוזיקה המובנית.
